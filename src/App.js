@@ -1,15 +1,20 @@
 import React, { Component } from "react";
-import { Card } from "@mui/material";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import axios from "axios";
+import {
+  Card,
+  CardActions,
+  CardContent,
+  CardMedia,
+  Button,
+  Typography,
+  IconButton,
+  Collapse,
+  TextField,
+  FormControl,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { styled } from "@mui/material/styles";
-import IconButton from "@mui/material/IconButton";
-import Collapse from "@mui/material/Collapse";
+import { headers } from "./Global/Global";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -29,45 +34,38 @@ export default class App extends Component {
       tableRepo: [],
       userRepo: {},
       expanded: false,
+      keyword: "",
     };
   }
 
   componentDidMount = () => {
-    this.doLoadTableRepo();
-    this.doLoadUserRepo();
+    this.loadData();
   };
 
-  doLoadTableRepo = () => {
-    axios
-      .get("https://api.github.com/users/dhaniarief/repos")
-      .then((response) => {
-        let temp = this.state.tableRepo;
-        temp = response.data;
-        for (var i = 0; i < temp.length; i++) {
-          temp[i].id = i + 1;
-        }
-        console.log(temp);
-        this.setState({ tableRepo: temp });
-      })
-      .catch((error) => {
-        console.log(error);
-        alert(error);
-      });
-  };
+  loadData = async () => {
+    try {
+      const [tableRepoResponse, userRepoResponse] = await Promise.all([
+        axios.get("https://api.github.com/users/lisarief100200/repos", {
+          headers: headers,
+        }),
+        axios.get("https://api.github.com/users/lisarief100200", {
+          headers: headers,
+        }),
+      ]);
 
-  doLoadUserRepo = () => {
-    axios
-      .get("https://api.github.com/users/dhaniarief")
-      .then((response) => {
-        let temp = this.state.userRepo;
-        temp = response.data;
-        console.log(response);
-        this.setState({ userRepo: temp });
-      })
-      .catch((error) => {
-        console.log(error);
-        alert(error);
+      let tempTableRepo = tableRepoResponse.data;
+      for (let i = 0; i < tempTableRepo.length; i++) {
+        tempTableRepo[i].id = i + 1;
+      }
+
+      this.setState({
+        tableRepo: tempTableRepo,
+        userRepo: userRepoResponse.data,
       });
+    } catch (error) {
+      console.error(error);
+      alert(error);
+    }
   };
 
   handleExpandClick = () => {
@@ -76,47 +74,135 @@ export default class App extends Component {
     });
   };
 
+  handleChange = (event) => {
+    this.setState({ keyword: event.target.value });
+  };
+
+  handleSearch = async () => {
+    try {
+      const [tableRepoResponse, userRepoResponse] = await Promise.all([
+        this.fetchTableRepo(),
+        this.fetchUserRepo(),
+      ]);
+
+      this.setState({
+        tableRepo: tableRepoResponse,
+        userRepo: userRepoResponse,
+      });
+    } catch (error) {
+      console.error(error);
+      alert(`Anda Salah Memasukkan UserName`);
+    }
+  };
+
+  fetchTableRepo = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.github.com/users/${this.state.keyword}/repos`,
+        {
+          headers: headers,
+        }
+      );
+      let temp = response.data;
+      for (let i = 0; i < temp.length; i++) {
+        temp[i].id = i + 1;
+      }
+      return temp;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  fetchUserRepo = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.github.com/users/${this.state.keyword}`,
+        {
+          headers: headers,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   render() {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
-        <Card sx={{ width: 300 }}>
-          <CardMedia
-            sx={{ height: 300 }}
-            image={this.state.userRepo.avatar_url}
+      <div>
+        <FormControl>
+          <TextField
+            label="Search"
+            variant="outlined"
+            value={this.state.keyword}
+            onChange={this.handleChange}
+            onKeyPress={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                this.handleSearch();
+              }
+            }}
           />
-          <CardContent>
-            <Button href={this.state.userRepo.html_url}>
-              <Typography>{this.state.userRepo.login}</Typography>
-            </Button>
-          </CardContent>
-          <CardActions disableSpacing>
-            <Typography>See {this.state.userRepo.login} repo</Typography>
-            <ExpandMore
-              expand={this.state.expanded}
-              onClick={this.handleExpandClick}
-              aria-expanded={this.state.expanded}
-              aria-label="show more"
-            >
-              <ExpandMoreIcon />
-            </ExpandMore>
-          </CardActions>
-          <Collapse in={this.state.expanded} timeout="auto" unmountOnExit>
-            {this.state.tableRepo.map((data, i) => {
-              return (
-                <CardContent key={i}>
-                  <Button href={data.html_url}>
-                    <Typography>{data.name}</Typography>
-                  </Button>
-                </CardContent>
-              );
-            })}
-          </Collapse>
-        </Card>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={this.handleSearch}
+          >
+            Search
+          </Button>
+        </FormControl>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <Card sx={{ width: 300 }}>
+            <CardMedia
+              sx={{ height: 300 }}
+              image={this.state.userRepo.avatar_url}
+            />
+            <CardContent>
+              <Button href={this.state.userRepo.html_url}>
+                <Typography>{this.state.userRepo.login}</Typography>
+              </Button>
+            </CardContent>
+            {this.state.tableRepo.length > 0 ? (
+              <div>
+                <CardActions disableSpacing>
+                  <Typography>See {this.state.userRepo.login} repo</Typography>
+                  <ExpandMore
+                    expand={this.state.expanded}
+                    onClick={this.handleExpandClick}
+                    aria-expanded={this.state.expanded}
+                    aria-label="show more"
+                  >
+                    <ExpandMoreIcon />
+                  </ExpandMore>
+                </CardActions>
+                <Collapse in={this.state.expanded} timeout="auto" unmountOnExit>
+                  <div>
+                    {this.state.tableRepo.map((data, i) => {
+                      return (
+                        <CardContent key={data.id}>
+                          <Button href={data.html_url}>
+                            <Typography>{data.name}</Typography>
+                          </Button>
+                        </CardContent>
+                      );
+                    })}
+                  </div>
+                </Collapse>
+              </div>
+            ) : (
+              <CardActions disableSpacing>
+                <Typography>
+                  {this.state.userRepo.login} have no repo
+                </Typography>
+              </CardActions>
+            )}
+          </Card>
+        </div>
       </div>
     );
   }
