@@ -13,6 +13,7 @@ import {
   TextField,
   Modal,
   Box,
+  Grid,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { styled } from "@mui/material/styles";
@@ -152,6 +153,136 @@ export default class App extends Component {
     });
   };
 
+  renderSearch = () => {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginBottom: 16,
+        }}
+      >
+        <TextField
+          style={{ backgroundColor: "white" }}
+          hiddenLabel
+          placeholder="Search"
+          id="filled-hidden-label-small"
+          defaultValue="Small"
+          variant="filled"
+          size="small"
+          value={this.state.keyword}
+          onChange={this.handleChange}
+          onKeyPress={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              this.handleSearch();
+            }
+          }}
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={this.handleSearch}
+          style={{ marginLeft: 8 }}
+        >
+          {<SearchIcon />}
+        </Button>
+      </div>
+    );
+  };
+
+  renderCard = () => {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <Card
+          sx={{ width: 350 }}
+          style={{
+            boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+            backgroundColor: "aquamarine",
+          }}
+        >
+          <CardMedia
+            image={this.state.userRepo.avatar_url}
+            style={{
+              borderRadius: "50%",
+              width: 300,
+              height: 300,
+              margin: "auto",
+            }}
+          />
+          <CardContent>
+            <Button
+              style={{ display: "flex", justifyContent: "center" }}
+              href={this.state.userRepo.html_url}
+            >
+              <Typography>{this.state.userRepo.login}</Typography>
+            </Button>
+            <Grid
+              container
+              spacing={0}
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Grid item xs={3}>
+                <Typography>Following</Typography>
+                <Typography style={{ margin: "auto" }}>
+                  {this.state.userRepo.following}
+                </Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>Followers</Typography>
+                <Typography>{this.state.userRepo.followers}</Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>Total Repo</Typography>
+                <Typography>{this.state.userRepo.public_repos}</Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+          {this.state.tableRepo.length > 0 ? (
+            <div>
+              <CardActions>
+                <Typography style={{ marginLeft: 4 }}>
+                  See {this.state.userRepo.login} repo
+                </Typography>
+                <ExpandMore
+                  expand={this.state.expanded}
+                  onClick={this.handleExpandClick}
+                  aria-expanded={this.state.expanded}
+                  aria-label="show more"
+                >
+                  <ExpandMoreIcon />
+                </ExpandMore>
+              </CardActions>
+              <Collapse in={this.state.expanded} timeout="auto" unmountOnExit>
+                <div>
+                  {this.state.tableRepo.map((data, i) => {
+                    return (
+                      <CardContent key={data.id}>
+                        <Button href={data.html_url}>
+                          <Typography>{data.name}</Typography>
+                        </Button>
+                      </CardContent>
+                    );
+                  })}
+                </div>
+              </Collapse>
+            </div>
+          ) : (
+            <CardActions disableSpacing>
+              <Typography>{this.state.userRepo.login} have no repo</Typography>
+            </CardActions>
+          )}
+        </Card>
+      </div>
+    );
+  };
+
   renderModal = () => {
     return (
       <Modal
@@ -175,100 +306,8 @@ export default class App extends Component {
   render() {
     return (
       <div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: 16,
-          }}
-        >
-          <TextField
-            style={{ backgroundColor: "aquamarine" }}
-            hiddenLabel
-            placeholder="Search"
-            id="filled-hidden-label-small"
-            defaultValue="Small"
-            variant="filled"
-            size="small"
-            value={this.state.keyword}
-            onChange={this.handleChange}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                this.handleSearch();
-              }
-            }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={this.handleSearch}
-            style={{ marginLeft: 8 }}
-          >
-            {<SearchIcon />}
-          </Button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <Card
-            sx={{ width: 300 }}
-            style={{
-              boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
-              backgroundColor: "aquamarine",
-            }}
-          >
-            <CardMedia
-              sx={{ height: 300 }}
-              image={this.state.userRepo.avatar_url}
-              style={{ borderRadius: "50%" }}
-            />
-            <CardContent style={{ display: "flex", justifyContent: "center" }}>
-              <Button href={this.state.userRepo.html_url}>
-                <Typography>{this.state.userRepo.login}</Typography>
-              </Button>
-            </CardContent>
-            {this.state.tableRepo.length > 0 ? (
-              <div>
-                <CardActions>
-                  <Typography style={{ marginLeft: 4 }}>
-                    See {this.state.userRepo.login} repo
-                  </Typography>
-                  <ExpandMore
-                    expand={this.state.expanded}
-                    onClick={this.handleExpandClick}
-                    aria-expanded={this.state.expanded}
-                    aria-label="show more"
-                  >
-                    <ExpandMoreIcon />
-                  </ExpandMore>
-                </CardActions>
-                <Collapse in={this.state.expanded} timeout="auto" unmountOnExit>
-                  <div>
-                    {this.state.tableRepo.map((data, i) => {
-                      return (
-                        <CardContent key={data.id}>
-                          <Button href={data.html_url}>
-                            <Typography>{data.name}</Typography>
-                          </Button>
-                        </CardContent>
-                      );
-                    })}
-                  </div>
-                </Collapse>
-              </div>
-            ) : (
-              <CardActions disableSpacing>
-                <Typography>
-                  {this.state.userRepo.login} have no repo
-                </Typography>
-              </CardActions>
-            )}
-          </Card>
-        </div>
+        {this.renderSearch()}
+        {this.renderCard()}
         {this.renderModal()}
       </div>
     );
