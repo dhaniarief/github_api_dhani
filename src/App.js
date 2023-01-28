@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
+import "./App.css";
 import {
   Card,
   CardActions,
@@ -10,11 +11,13 @@ import {
   IconButton,
   Collapse,
   TextField,
-  FormControl,
+  Modal,
+  Box,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { styled } from "@mui/material/styles";
 import { headers } from "./Global/Global";
+import SearchIcon from "@mui/icons-material/Search";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -27,6 +30,18 @@ const ExpandMore = styled((props) => {
   }),
 }));
 
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -35,6 +50,7 @@ export default class App extends Component {
       userRepo: {},
       expanded: false,
       keyword: "",
+      open: false,
     };
   }
 
@@ -45,10 +61,10 @@ export default class App extends Component {
   loadData = async () => {
     try {
       const [tableRepoResponse, userRepoResponse] = await Promise.all([
-        axios.get("https://api.github.com/users/lisarief100200/repos", {
+        axios.get("https://api.github.com/users/dhaniarief/repos", {
           headers: headers,
         }),
-        axios.get("https://api.github.com/users/lisarief100200", {
+        axios.get("https://api.github.com/users/dhaniarief", {
           headers: headers,
         }),
       ]);
@@ -90,8 +106,11 @@ export default class App extends Component {
         userRepo: userRepoResponse,
       });
     } catch (error) {
-      console.error(error);
-      alert(`Anda Salah Memasukkan UserName`);
+      console.log(error);
+      this.setState({
+        open: true,
+        keyword: "",
+      });
     }
   };
 
@@ -127,13 +146,50 @@ export default class App extends Component {
     }
   };
 
+  handleClose = () => {
+    this.setState({
+      open: false,
+    });
+  };
+
+  renderModal = () => {
+    return (
+      <Modal
+        open={this.state.open}
+        onClose={this.handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Not Found
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+            Please Search Another Username
+          </Typography>
+        </Box>
+      </Modal>
+    );
+  };
+
   render() {
     return (
       <div>
-        <FormControl>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 16,
+          }}
+        >
           <TextField
-            label="Search"
-            variant="outlined"
+            style={{ backgroundColor: "aquamarine" }}
+            hiddenLabel
+            placeholder="Search"
+            id="filled-hidden-label-small"
+            defaultValue="Small"
+            variant="filled"
+            size="small"
             value={this.state.keyword}
             onChange={this.handleChange}
             onKeyPress={(event) => {
@@ -147,30 +203,40 @@ export default class App extends Component {
             variant="contained"
             color="primary"
             onClick={this.handleSearch}
+            style={{ marginLeft: 8 }}
           >
-            Search
+            {<SearchIcon />}
           </Button>
-        </FormControl>
+        </div>
         <div
           style={{
             display: "flex",
             justifyContent: "center",
           }}
         >
-          <Card sx={{ width: 300 }}>
+          <Card
+            sx={{ width: 300 }}
+            style={{
+              boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+              backgroundColor: "aquamarine",
+            }}
+          >
             <CardMedia
               sx={{ height: 300 }}
               image={this.state.userRepo.avatar_url}
+              style={{ borderRadius: "50%" }}
             />
-            <CardContent>
+            <CardContent style={{ display: "flex", justifyContent: "center" }}>
               <Button href={this.state.userRepo.html_url}>
                 <Typography>{this.state.userRepo.login}</Typography>
               </Button>
             </CardContent>
             {this.state.tableRepo.length > 0 ? (
               <div>
-                <CardActions disableSpacing>
-                  <Typography>See {this.state.userRepo.login} repo</Typography>
+                <CardActions>
+                  <Typography style={{ marginLeft: 4 }}>
+                    See {this.state.userRepo.login} repo
+                  </Typography>
                   <ExpandMore
                     expand={this.state.expanded}
                     onClick={this.handleExpandClick}
@@ -203,6 +269,7 @@ export default class App extends Component {
             )}
           </Card>
         </div>
+        {this.renderModal()}
       </div>
     );
   }
